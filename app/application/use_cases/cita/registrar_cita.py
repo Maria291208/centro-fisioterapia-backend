@@ -21,10 +21,6 @@ class RegistrarCita:
 
     def ejecutar(self, datos):
 
-        # ==========================================
-        # 1. Verificar paciente
-        # ==========================================
-
         paciente = self.paciente_repo.get_by_id(
             datos.id_paciente
         )
@@ -34,11 +30,7 @@ class RegistrarCita:
                 status_code=404,
                 detail="El paciente no existe"
             )
-
-        # ==========================================
-        # 2. Verificar horario
-        # ==========================================
-
+        
         horario = self.horario_repo.get_by_id(
             datos.id_horario
         )
@@ -49,9 +41,6 @@ class RegistrarCita:
                 detail="El horario no existe"
             )
 
-        # ==========================================
-        # 3. Verificar fisioterapeuta
-        # ==========================================
 
         fisioterapeuta = self.usuario_repo.get_by_id(
             datos.id_fisioterapeuta
@@ -69,10 +58,6 @@ class RegistrarCita:
                 detail="El usuario seleccionado no es fisioterapeuta"
             )
 
-        # ==========================================
-        # 4. Paciente ya tiene otra CITA
-        # ==========================================
-
         cita_paciente = (
             self.cita_repo
             .get_by_paciente_fecha_horario(
@@ -88,10 +73,7 @@ class RegistrarCita:
                 detail="El paciente ya tiene una cita en esa fecha y horario"
             )
 
-        # ==========================================
-        # 5. Fisioterapeuta ya tiene otra CITA
-        # ==========================================
-
+       
         cita_fisioterapeuta = (
             self.cita_repo
             .get_by_fisioterapeuta_fecha_horario(
@@ -107,10 +89,7 @@ class RegistrarCita:
                 detail="El fisioterapeuta ya tiene una cita en esa fecha y horario"
             )
 
-        # ==========================================
-        # 6. Fisioterapeuta ya tiene una SESIÓN
-        # ==========================================
-
+     
         sesion_fisioterapeuta = (
             self.sesion_repo
             .get_by_fisioterapeuta_fecha_horario(
@@ -126,10 +105,7 @@ class RegistrarCita:
                 detail="El fisioterapeuta ya tiene una sesión en esa fecha y horario"
             )
 
-        # ==========================================
-        # 7. Paciente ya tiene una SESIÓN
-        # ==========================================
-
+       
         sesion_paciente = (
             self.sesion_repo
             .get_by_paciente_fecha_horario(
@@ -145,10 +121,6 @@ class RegistrarCita:
                 detail="El paciente ya tiene una sesión en esa fecha y horario"
             )
 
-        # ==========================================
-        # 8. Crear cita
-        # ==========================================
-
         cita = Cita(
             fecha=datos.fecha,
             motivo=datos.motivo,
@@ -158,8 +130,6 @@ class RegistrarCita:
             id_fisioterapeuta=datos.id_fisioterapeuta
         )
 
-        # NO marcar horario como ocupado.
-        # El horario puede ser utilizado por
-        # diferentes fisioterapeutas.
+   
 
         return self.cita_repo.create(cita)

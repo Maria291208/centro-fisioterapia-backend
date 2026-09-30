@@ -1,14 +1,36 @@
 from sqlalchemy import Column, Integer, Date, String, ForeignKey
+from sqlalchemy.orm import relationship
+
 from app.infrastructure.database.database import Base
 
 
 class Sesion(Base):
+
     __tablename__ = "sesiones"
 
-    id = Column(Integer, primary_key=True, index=True)
-    fecha = Column(Date)
-    numero_sesion = Column(Integer)
-    estado = Column(String, default="prescrita")
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    fecha = Column(
+        Date
+    )
+
+    numero_sesion = Column(
+        Integer
+    )
+
+    estado = Column(
+        String,
+        default="prescrita"
+    )
+
+    motivo_reprogramacion = Column(
+        String(500),
+        nullable=True
+    )
 
     id_tratamiento = Column(
         Integer,
@@ -20,4 +42,8 @@ class Sesion(Base):
         Integer,
         ForeignKey("horarios.id"),
         nullable=False
+    )
+
+    horario = relationship(
+        "Horario"
     )

@@ -1,22 +1,55 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+
+# ==========================================================
+# REGISTRAR USUARIO
+# ==========================================================
 
 class UsuarioCreate(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=6)
-    rol: str = "paciente"
 
+    username: str
+
+    password: str
+
+    rol: str
+
+
+# ==========================================================
+# RESPUESTA USUARIO
+# ==========================================================
 
 class UsuarioResponse(BaseModel):
+
     id: int
+
     username: str
+
     rol: str
+
     active: bool
 
+    id_paciente: int | None = None
+
     class Config:
+
         from_attributes = True
 
 
+# ==========================================================
+# CAMBIAR ESTADO DEL USUARIO
+# ==========================================================
+
+class UsuarioEstadoUpdate(BaseModel):
+
+    active: bool
+
+
+# ==========================================================
+# LOGIN
+# ==========================================================
+
 class Token(BaseModel):
+
     access_token: str
-    token_type: str = "bearer"
+
+    token_type: str

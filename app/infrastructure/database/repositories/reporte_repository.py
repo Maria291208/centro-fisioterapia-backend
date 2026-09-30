@@ -9,7 +9,9 @@ class ReporteRepositoryImpl:
         self.db = db
 
     def get_all(self):
-        return self.db.query(Reporte).all()
+        return self.db.query(Reporte).order_by(
+        Reporte.id.desc()
+    ).all()
 
     def get_by_id(self, reporte_id: int):
         return self.db.query(Reporte).filter(

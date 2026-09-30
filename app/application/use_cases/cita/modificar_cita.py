@@ -19,7 +19,6 @@ class ModificarCita:
         datos
     ):
 
-        # Buscar cita
         cita = self.cita_repo.get_by_id(cita_id)
 
         if not cita:
@@ -41,11 +40,6 @@ class ModificarCita:
             "id_horario",
             cita.id_horario
         )
-
-        # ==========================================
-        # 1. Verificar otra cita del mismo paciente
-        # ==========================================
-
         cita_paciente = (
             self.cita_repo
             .get_by_paciente_fecha_horario(
@@ -60,11 +54,6 @@ class ModificarCita:
                 status_code=400,
                 detail="El paciente ya tiene otra cita en esa fecha y horario"
             )
-
-        # ==========================================
-        # 2. Verificar otra cita del fisioterapeuta
-        # ==========================================
-
         cita_fisioterapeuta = (
             self.cita_repo
             .get_by_fisioterapeuta_fecha_horario(
@@ -83,10 +72,6 @@ class ModificarCita:
                 detail="El fisioterapeuta ya tiene otra cita en esa fecha y horario"
             )
 
-        # ==========================================
-        # 3. Verificar sesión del fisioterapeuta
-        # ==========================================
-
         sesion_fisioterapeuta = (
             self.sesion_repo
             .get_by_fisioterapeuta_fecha_horario(
@@ -102,10 +87,6 @@ class ModificarCita:
                 detail="El fisioterapeuta ya tiene una sesión en esa fecha y horario"
             )
 
-        # ==========================================
-        # 4. Verificar sesión del paciente
-        # ==========================================
-
         sesion_paciente = (
             self.sesion_repo
             .get_by_paciente_fecha_horario(
@@ -120,10 +101,6 @@ class ModificarCita:
                 status_code=400,
                 detail="El paciente ya tiene una sesión en esa fecha y horario"
             )
-
-        # ==========================================
-        # 5. Actualizar
-        # ==========================================
 
         return self.cita_repo.update(
             cita_id,

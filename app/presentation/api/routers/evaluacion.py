@@ -1,3 +1,5 @@
+from http.client import HTTPException
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -48,3 +50,29 @@ def registrar_evaluacion(
     EvaluacionRepository(db),
     CitaRepository(db)
 ).ejecutar(datos, usuario)
+
+@router.get(
+    "/cita/{id_cita}",
+    response_model=EvaluacionResponse
+)
+def obtener_evaluacion_por_cita(
+    id_cita: int,
+    db: Session = Depends(get_db),
+    usuario=Depends(
+        requerir_roles(
+            "administrador",
+            "fisioterapeuta"
+        )
+    )
+):
+    evaluacion = EvaluacionRepository(
+        db
+    ).get_by_cita(id_cita)
+
+    if not evaluacion:
+        raise HTTPException(
+            status_code=404,
+            detail="La cita no tiene una evaluación inicial"
+        )
+
+    return evaluacion

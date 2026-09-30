@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import relationship
 
 from app.infrastructure.database.database import Base
 
@@ -7,8 +8,17 @@ class Cita(Base):
     __tablename__ = "citas"
 
     id = Column(Integer, primary_key=True, index=True)
-    fecha = Column(Date, nullable=False)
-    motivo = Column(String(255), nullable=False)
+
+    fecha = Column(
+        Date,
+        nullable=False
+    )
+
+    motivo = Column(
+        String(255),
+        nullable=False
+    )
+
     estado = Column(
         String(20),
         nullable=False,
@@ -31,4 +41,8 @@ class Cita(Base):
         Integer,
         ForeignKey("usuarios.id"),
         nullable=False
+    )
+
+    horario = relationship(
+        "Horario"
     )

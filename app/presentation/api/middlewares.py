@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.infrastructure.database.database import get_db
 from app.infrastructure.database.security import decodificar_token
@@ -53,3 +54,17 @@ def requerir_rol(rol_requerido: str):
         return usuario
 
     return verificar
+
+
+def configurar_middlewares(app):
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )

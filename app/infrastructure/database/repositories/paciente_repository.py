@@ -9,7 +9,12 @@ class PacienteRepository:
         self.db = db
 
     def get_all(self):
-        return self.db.query(Paciente).all()
+        return (
+        self.db
+        .query(Paciente)
+        .order_by(Paciente.id.desc())
+        .all()
+    )
 
     def get_by_id(self, id):
         return (

@@ -28,7 +28,14 @@ class RegistrarAsistencia:
                 detail="La sesión no existe"
             )
 
-        # 2. Verificar que no exista asistencia
+        # 2. Verificar que la sesión esté pendiente
+        if sesion.estado != "prescrita":
+            raise HTTPException(
+                status_code=400,
+                detail="Esta sesión ya fue atendida o controlada"
+            )
+
+        # 3. Verificar que no exista asistencia
         asistencia_existente = (
             self.asistencia_repo.get_by_sesion(
                 datos.id_sesion
@@ -41,7 +48,32 @@ class RegistrarAsistencia:
                 detail="La asistencia ya fue registrada"
             )
 
-        # 3. Crear asistencia
+        # 4. Verificar el orden de las sesiones
+        if sesion.numero_sesion > 1:
+
+            sesion_anterior = (
+                self.sesion_repo.get_by_tratamiento_numero(
+                    sesion.id_tratamiento,
+                    sesion.numero_sesion - 1
+                )
+            )
+
+            if not sesion_anterior:
+                raise HTTPException(
+                    status_code=400,
+                    detail="La sesión anterior todavía no está programada"
+                )
+
+            if sesion_anterior.estado != "realizada":
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "No puede atender esta sesión. "
+                        "Primero debe completarse la sesión anterior"
+                    )
+                )
+
+        # 5. Crear asistencia
         asistencia = Asistencia(
             fecha_registro=datos.fecha_registro,
             estado=datos.estado,
@@ -55,7 +87,7 @@ class RegistrarAsistencia:
             )
         )
 
-        # 4. Cambiar estado de la sesión
+        # 6. Actualizar estado de la sesión
         if datos.estado == "presente":
 
             sesion.estado = "realizada"
@@ -69,13 +101,14 @@ class RegistrarAsistencia:
             sesion
         )
 
-        # 5. Obtener todas las sesiones
-        #    del tratamiento
-        sesiones = self.sesion_repo.get_by_tratamiento(
-            sesion.id_tratamiento
+        # 7. Obtener todas las sesiones del tratamiento
+        sesiones = (
+            self.sesion_repo.get_by_tratamiento(
+                sesion.id_tratamiento
+            )
         )
 
-        # 6. Verificar si todas tienen asistencia
+        # 8. Verificar si todas están controladas
         todas_controladas = True
 
         for sesion_actual in sesiones:
@@ -90,8 +123,7 @@ class RegistrarAsistencia:
                 todas_controladas = False
                 break
 
-        # 7. Si todas están controladas,
-        #    finalizar tratamiento
+        # 9. Finalizar tratamiento
         if todas_controladas:
 
             tratamiento = (

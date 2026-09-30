@@ -34,6 +34,13 @@ def obtener_usuario_actual(
             detail="Usuario no encontrado"
         )
 
+    # NUEVO: verificar si la cuenta está activa
+    if not usuario.active:
+        raise HTTPException(
+            status_code=403,
+            detail="Usuario inactivo"
+        )
+
     return usuario
 
 
@@ -42,6 +49,7 @@ def requerir_roles(*roles_permitidos: str):
     def verificar(
         usuario=Depends(obtener_usuario_actual)
     ):
+
         if usuario.rol not in roles_permitidos:
             raise HTTPException(
                 status_code=403,

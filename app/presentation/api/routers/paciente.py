@@ -1,3 +1,6 @@
+from http.client import HTTPException
+
+from app.infrastructure.database.models.cita import Cita
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -58,20 +61,23 @@ def registrar_paciente(
         UsuarioRepository(db)
     ).ejecutar(datos)
 
-
 @router.get(
     "/",
     response_model=list[PacienteResponse]
 )
 def listar_pacientes(
     db: Session = Depends(get_db),
-    usuario=Depends(requerir_roles("administrador", "recepcionista"))
+    usuario=Depends(
+        requerir_roles(
+            "administrador",
+            "recepcionista"
+        )
+    )
 ):
-    return ConsultarPaciente(
+    return (
         PacienteRepository(db)
-    ).todos()
-
-
+        .get_all()
+    )
 @router.get(
     "/{paciente_id}",
     response_model=PacienteResponse
@@ -79,8 +85,44 @@ def listar_pacientes(
 def obtener_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
-    usuario=Depends(requerir_roles("administrador", "recepcionista"))
+    usuario=Depends(
+        requerir_roles(
+            "administrador",
+            "recepcionista",
+            "fisioterapeuta",
+            "paciente"
+        )
+    )
 ):
+    # El paciente solamente puede consultar su propio perfil
+    if (
+        usuario.rol == "paciente"
+        and usuario.id_paciente != paciente_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo puede consultar su propio perfil"
+        )
+
+    # El fisioterapeuta solamente puede consultar
+    # pacientes que tengan una cita asignada a él
+    if usuario.rol == "fisioterapeuta":
+
+        citas = (
+            db.query(Cita)
+            .filter(
+                Cita.id_paciente == paciente_id,
+                Cita.id_fisioterapeuta == usuario.id
+            )
+            .first()
+        )
+
+        if not citas:
+            raise HTTPException(
+                status_code=403,
+                detail="No tiene acceso a este paciente"
+            )
+
     return ConsultarPaciente(
         PacienteRepository(db)
     ).por_id(paciente_id)
@@ -94,8 +136,23 @@ def actualizar_paciente(
     paciente_id: int,
     datos: PacienteUpdate,
     db: Session = Depends(get_db),
-    usuario=Depends(requerir_roles("administrador", "recepcionista"))
+    usuario=Depends(
+        requerir_roles(
+            "administrador",
+            "recepcionista",
+            "paciente"
+        )
+    )
 ):
+    if (
+        usuario.rol == "paciente"
+        and usuario.id_paciente != paciente_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo puede modificar su propio perfil"
+        )
+
     return ActualizarPaciente(
         PacienteRepository(db)
     ).ejecutar(paciente_id, datos)
@@ -113,3 +170,31 @@ def eliminar_paciente(
     return EliminarPaciente(
         PacienteRepository(db)
     ).ejecutar(paciente_id)
+
+@router.get(
+    "/{paciente_id}",
+    response_model=PacienteResponse
+)
+def obtener_paciente(
+    paciente_id: int,
+    db: Session = Depends(get_db),
+    usuario=Depends(
+        requerir_roles(
+            "administrador",
+            "recepcionista",
+            "paciente"
+        )
+    )
+):
+    if (
+        usuario.rol == "paciente"
+        and usuario.id_paciente != paciente_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo puede consultar su propio perfil"
+        )
+
+    return ConsultarPaciente(
+        PacienteRepository(db)
+    ).por_id(paciente_id)

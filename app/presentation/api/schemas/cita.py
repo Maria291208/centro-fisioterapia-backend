@@ -1,6 +1,15 @@
-from datetime import date
+from datetime import date, time
 
 from pydantic import BaseModel
+
+
+class HorarioResponse(BaseModel):
+    id: int
+    hora_inicio: time
+    hora_fin: time
+
+    class Config:
+        from_attributes = True
 
 
 class CitaCreate(BaseModel):
@@ -27,6 +36,7 @@ class CitaResponse(BaseModel):
     id_paciente: int
     id_horario: int
     id_fisioterapeuta: int
+    horario: HorarioResponse
 
     class Config:
         from_attributes = True

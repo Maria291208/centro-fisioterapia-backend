@@ -33,8 +33,10 @@ class IniciarSesion:
             )
 
         token = crear_token({
-            "sub": usuario.username,
-            "rol": usuario.rol
+         "sub": usuario.username,
+         "id": usuario.id,
+         "rol": usuario.rol,
+         "id_paciente": usuario.id_paciente
         })
 
         return {

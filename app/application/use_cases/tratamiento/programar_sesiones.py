@@ -11,49 +11,77 @@ class ProgramarSesion:
         tratamiento_repo,
         horario_repo
     ):
+
         self.sesion_repo = sesion_repo
+
         self.tratamiento_repo = tratamiento_repo
+
         self.horario_repo = horario_repo
 
     def ejecutar(self, datos):
-
-        # ==========================================
-        # 1. Verificar tratamiento
-        # ==========================================
 
         tratamiento = self.tratamiento_repo.get_by_id(
             datos.id_tratamiento
         )
 
         if not tratamiento:
+
             raise HTTPException(
                 status_code=404,
                 detail="El tratamiento no existe"
             )
 
-        # ==========================================
-        # 2. Validar fecha del tratamiento
-        # ==========================================
+        if datos.numero_sesion > tratamiento.numero_sesiones:
 
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"El tratamiento tiene establecidas "
+                    f"{tratamiento.numero_sesiones} sesiones. "
+                    f"No puede registrar la sesión "
+                    f"{datos.numero_sesion}."
+                )
+            )
+
+   
+        sesiones_existentes = (
+            self.sesion_repo.get_by_tratamiento(
+                datos.id_tratamiento
+            )
+        )
+
+        if len(sesiones_existentes) >= tratamiento.numero_sesiones:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Ya se alcanzó el número máximo de "
+                    "sesiones establecido para este tratamiento"
+                )
+            )
+
+    
         if datos.fecha < tratamiento.fecha_inicio:
 
             raise HTTPException(
                 status_code=400,
-                detail="La fecha de la sesión no puede ser anterior al inicio del tratamiento"
+                detail=(
+                    "La fecha de la sesión no puede ser "
+                    "anterior al inicio del tratamiento"
+                )
             )
 
         if datos.fecha > tratamiento.fecha_fin:
 
             raise HTTPException(
                 status_code=400,
-                detail="La fecha de la sesión no puede superar la fecha de fin del tratamiento"
+                detail=(
+                    "La fecha de la sesión no puede superar "
+                    "la fecha de fin del tratamiento"
+                )
             )
 
-        # ==========================================
-        # 3. Verificar que no exista otra sesión
-        #    del mismo tratamiento en esa fecha
-        # ==========================================
-
+  
         sesion_fecha = (
             self.sesion_repo
             .get_by_tratamiento_fecha(
@@ -66,13 +94,11 @@ class ProgramarSesion:
 
             raise HTTPException(
                 status_code=400,
-                detail="Ya existe una sesión de este tratamiento en esa fecha"
+                detail=(
+                    "Ya existe una sesión de este tratamiento "
+                    "en esa fecha"
+                )
             )
-
-        # ==========================================
-        # 4. Verificar que no se repita
-        #    el número de sesión
-        # ==========================================
 
         sesion_numero = (
             self.sesion_repo
@@ -86,12 +112,11 @@ class ProgramarSesion:
 
             raise HTTPException(
                 status_code=400,
-                detail="El número de sesión ya existe en este tratamiento"
+                detail=(
+                    "El número de sesión ya existe "
+                    "en este tratamiento"
+                )
             )
-
-        # ==========================================
-        # 5. Verificar horario
-        # ==========================================
 
         horario = self.horario_repo.get_by_id(
             datos.id_horario
@@ -104,21 +129,18 @@ class ProgramarSesion:
                 detail="El horario no existe"
             )
 
-        # ==========================================
-        # 6. Crear sesión
-        # ==========================================
 
         sesion = Sesion(
+
             fecha=datos.fecha,
+
             numero_sesion=datos.numero_sesion,
+
             id_tratamiento=datos.id_tratamiento,
+
             id_horario=datos.id_horario
         )
 
-        # IMPORTANTE:
-        # Ya NO cambiamos el horario a "ocupado".
-        #
-        # Los horarios representan franjas horarias
-        # que pueden reutilizarse.
-
-        return self.sesion_repo.create(sesion)
+        return self.sesion_repo.create(
+            sesion
+        )

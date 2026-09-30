@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.infrastructure.database.database import get_db
@@ -55,6 +55,62 @@ def listar_tratamientos(
 
     return repo.get_all()
 
+
+@router.get(
+    "/evaluacion/{id_evaluacion}",
+    response_model=TratamientoResponse
+)
+def obtener_tratamiento_por_evaluacion(
+    id_evaluacion: int,
+    db: Session = Depends(get_db),
+    usuario=Depends(
+        requerir_roles(
+            "administrador",
+            "fisioterapeuta"
+        )
+    )
+):
+    tratamiento = TratamientoRepositoryImpl(
+        db
+    ).get_by_evaluacion(id_evaluacion)
+
+    if not tratamiento:
+        raise HTTPException(
+            status_code=404,
+            detail="La evaluación no tiene un tratamiento"
+        )
+
+    return tratamiento
+
+@router.get(
+    "/fisioterapeuta/{fisioterapeuta_id}",
+    response_model=list[TratamientoResponse]
+)
+def listar_tratamientos_fisioterapeuta(
+    fisioterapeuta_id: int,
+    db: Session = Depends(get_db),
+    usuario=Depends(
+        requerir_roles(
+            "administrador",
+            "fisioterapeuta"
+        )
+    )
+):
+
+    if (
+        usuario.rol == "fisioterapeuta"
+        and usuario.id != fisioterapeuta_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo puede consultar sus propios tratamientos"
+        )
+
+    repo = TratamientoRepositoryImpl(db)
+
+    return repo.get_by_fisioterapeuta(
+        fisioterapeuta_id
+    )
 
 @router.get(
     "/{id}",
